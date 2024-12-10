@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from typing import Iterator
 
@@ -28,58 +29,75 @@ class DiskMap:
         return result
 
     def compress(self) -> int:
-        files = self.orig.copy()
+        blocks = self.orig.copy()
 
         checksum = 0
         start_file = 0
         start_pos = 0
         start_disk = 0
-        end_file = (len(files) - 1) // 2
-        end_pos = len(files) - 1
+        end_file = (len(blocks) - 1) // 2
+        end_pos = len(blocks) - 1
         while end_pos > start_pos:
-            checksum += start_file * DiskMap.sum(start_disk, files[start_pos])
-            start_disk += files[start_pos]
+            checksum += start_file * DiskMap.sum(start_disk, blocks[start_pos])
+            start_disk += blocks[start_pos]
             start_pos += 1
-            while files[start_pos] != 0:
-                diff = min(files[end_pos], files[start_pos])
+            while blocks[start_pos] != 0:
+                diff = min(blocks[end_pos], blocks[start_pos])
                 checksum += end_file * DiskMap.sum(start_disk, diff)
                 start_disk += diff
-                files[start_pos] -= diff
-                files[end_pos] -= diff
-                if files[end_pos] == 0:
+                blocks[start_pos] -= diff
+                blocks[end_pos] -= diff
+                if blocks[end_pos] == 0:
                     end_pos -= 2
                     end_file -= 1
             start_pos += 1
             start_file += 1
-        checksum += start_file * DiskMap.sum(start_disk, files[start_pos])
+        checksum += start_file * DiskMap.sum(start_disk, blocks[start_pos])
         return checksum
 
     def compress_better(self) -> int:
-        files: list[tuple[int, int]] = []
-        spaces: list[tuple[int, int]] = []
+        file_blocks: list[tuple[int, int]] = []
+        spaces: list[deque[int]] = [deque() for _ in range(10)]
         position = 0
-        for file, space in as_two_tuple(self.orig, default=0):
-            files.append((file, position))
-            position += file
-            spaces.append((space, position))
+        for blocks, space in as_two_tuple(self.orig, default=0):
+            assert blocks != 0
+            file_blocks.append((blocks, position))
+            position += blocks
+            spaces[space].appendleft(position)
             position += space
 
         checksum = 0
 
-        for file, (blocks, position) in enumerate(reversed(files)):
-            file = len(files) - file - 1
+        for file, (blocks, position) in enumerate(reversed(file_blocks)):
+            file = len(file_blocks) - file - 1
 
-            found = False
-            for space_id in range(len(spaces)):
-                space, space_position = spaces[space_id]
-                if space_position >= position:
-                    break
-                if space >= blocks:
-                    checksum += file * DiskMap.sum(space_position, blocks)
-                    spaces[space_id] = space - blocks, space_position + blocks
-                    found = True
-                    break
-            if not found:
+            best = min(
+                (
+                    (spaces[space][-1], space)
+                    for space in range(blocks, 10)
+                    if spaces[space] and spaces[space][-1] < position
+                ),
+                default=None,
+            )
+
+            if best is not None:
+                space_position, space = best
+
+                checksum += file * DiskMap.sum(space_position, blocks)
+
+                spaces[space].pop()
+                rest_space = space - blocks
+                if rest_space > 0:
+                    space_position += blocks
+                    larger: deque[int] = deque()
+                    while (
+                        spaces[rest_space] and spaces[rest_space][-1] < space_position
+                    ):
+                        larger.append(spaces[rest_space].pop())
+                    spaces[rest_space].append(space_position)
+                    while larger:
+                        spaces[rest_space].append(larger.pop())
+            else:
                 checksum += file * DiskMap.sum(position, blocks)
         return checksum
 
