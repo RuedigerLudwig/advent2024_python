@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations
-from typing import Iterator
+from collections.abc import Iterator
 
 from advent.common.position import Position
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Iterator
+from collections.abc import Iterator
 
 
 from advent.common.helper import as_two_tuple

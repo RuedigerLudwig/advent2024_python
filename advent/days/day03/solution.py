@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 import re
-from typing import Iterator
+from collections.abc import Iterator
 
 day_num = 3
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator, Literal
+from collections.abc import Iterator
+from typing import Literal
 
 
 class Direction(Enum):

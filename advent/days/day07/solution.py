@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Iterator
+from collections.abc import Iterator
 
 day_num = 7
 
