@@ -66,7 +66,7 @@ class Report:
                 return True
         return False
 
-    def is_safe_damped2(self) -> bool:
+    def is_safe_damped(self) -> bool:
         def check(first: int, data: list[int], direction: bool, dumped: bool) -> bool:
             for second in data:
                 if Report.cmp2(first, second) != direction:
@@ -93,23 +93,6 @@ class Report:
             return False
 
         return check(third, self.data[3:], direction, True)
-
-    def is_safe_damped(self) -> bool:
-        direction: int | None = None
-        damped = False
-        for a, b in zip(self.data, self.data[1:]):
-            diff = a - b
-            if direction is None:
-                if diff != 0:
-                    direction = diff // abs(diff)
-            if direction is not None:
-                d = diff // direction
-                if 1 <= d <= 3:
-                    continue
-            if damped:
-                return False
-            damped = True
-        return False
 
 
 def part1(lines: Iterator[str]) -> int:
