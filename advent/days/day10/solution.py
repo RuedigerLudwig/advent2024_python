@@ -45,11 +45,11 @@ class Trail:
                     if next_height is None or next_height != current_height + 1:
                         continue
 
+                    visited.add(next_pos)
                     if next_height == 9:
                         path_count += 1
                         continue
 
-                    visited.add(next_pos)
                     to_test.appendleft((next_pos, next_height))
 
         return path_count
