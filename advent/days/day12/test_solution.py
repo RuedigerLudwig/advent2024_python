@@ -20,12 +20,13 @@ def test_part2():
 
 def test_walk_a():
     lines = input.read_lines(day_num, "example02.txt")
-    _, value, patch, _ = Garden.parse(lines).value_patch(Position(0, 0))
+    patch, fences, neighbors = Garden.parse(lines).value_patch(Position(2, 1))
     assert len(patch) == 4
-    assert value == 10
+    assert len(fences) == 10
+    assert len(neighbors) == 5
 
 
 def test_value_small():
     lines = input.read_lines(day_num, "example02.txt")
     garden = Garden.parse(lines)
-    assert garden.find_price(lambda p: len(p)) == 772
+    assert garden.find_price(lambda p: len(p)) == 140

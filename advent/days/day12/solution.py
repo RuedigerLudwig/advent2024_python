@@ -8,7 +8,7 @@ from advent.common.position import Direction, Position
 
 day_num = 12
 
-Fence = tuple[Position, Direction]
+Fence = tuple[tuple[int, int], int]
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,32 +25,37 @@ class Garden:
             return self.patches[pos.y][pos.x]
         return None
 
+    @staticmethod
+    def fence_key(pos: Position, dir: Direction) -> Fence:
+        match dir:
+            case Direction.East | Direction.West:
+                return (dir.value, pos.x), pos.y
+            case Direction.North | Direction.South:
+                return (dir.value, pos.y), pos.x
+
     def value_patch(
         self, start: Position
-    ) -> tuple[str, list[Fence], set[Position], set[Position]]:
+    ) -> tuple[set[Position], list[Fence], set[Position]]:
         to_be_checked = {start}
         patch = {start}
         perimeter: list[Fence] = []
-        flower = self.get(start)
-        assert flower is not None
+        flower = self.patches[start.y][start.x]
         neighbors: set[Position] = set()
         while to_be_checked:
             current = to_be_checked.pop()
             for direction in Direction:
                 next = current + direction.as_position()
-                next_flower = self.get(next)
-                if next_flower is None:
-                    perimeter.append((next, direction))
-                    continue
-                if next_flower != flower:
-                    perimeter.append((next, direction))
-                    neighbors.add(next)
-                    continue
                 if next in patch:
+                    continue
+                next_flower = self.get(next)
+                if next_flower != flower:
+                    perimeter.append(Garden.fence_key(next, direction))
+                    if next_flower is not None:
+                        neighbors.add(next)
                     continue
                 patch.add(next)
                 to_be_checked.add(next)
-        return flower, perimeter, patch, neighbors
+        return patch, perimeter, neighbors
 
     def find_price(self, value_perimeter: Callable[[list[Fence]], int]):
         visited: set[Position] = set()
@@ -58,10 +63,8 @@ class Garden:
         value = 0
         while unknown:
             current = unknown.pop()
-            _, perimeter, patch, neighbors = self.value_patch(current)
-            peri_val = value_perimeter(perimeter)
-            # print(f"{flower}:  {len(patch)} * {peri_val}")
-            value += peri_val * len(patch)
+            patch, perimeter, neighbors = self.value_patch(current)
+            value += len(patch) * value_perimeter(perimeter)
             visited |= patch
             unknown = (unknown | neighbors) - visited
         return value
@@ -72,34 +75,16 @@ def part1(lines: Iterator[str]) -> int:
     return garden.find_price(lambda p: len(p))
 
 
-def fence_key(fence: Fence):
-    match fence[1]:
-        case Direction.East:
-            return 1, fence[0].x, fence[0].y, fence
-        case Direction.West:
-            return 2, fence[0].x, fence[0].y, fence
-        case Direction.North:
-            return 3, fence[0].y, fence[0].x, fence
-        case Direction.South:
-            return 4, fence[0].y, fence[0].x, fence
+def count_fences(perimeter: list[Fence]) -> int:
+    perimeter.sort()
 
-
-def straight_perimeter(perimeter: list[Fence]) -> int:
-    peri = [fence_key(p) for p in perimeter]
-    peri = sorted(peri)
-
-    value = 1
-    ldir, lfst, lsnd, _ = peri[0]
-    for cdir, cfst, csnd, _ in peri[1:]:
-        if cdir != ldir or cfst != lfst or abs(csnd - lsnd) != 1:
-            value += 1
-        ldir = cdir
-        lfst = cfst
-        lsnd = csnd
-
-    return value
+    return 1 + sum(
+        1
+        for (fence1, pos1), (fence2, pos2) in zip(perimeter, perimeter[1:])
+        if fence1 != fence2 or abs(pos1 - pos2) != 1
+    )
 
 
 def part2(lines: Iterator[str]) -> int:
     garden = Garden.parse(lines)
-    return garden.find_price(straight_perimeter)
+    return garden.find_price(count_fences)
