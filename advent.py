@@ -80,9 +80,9 @@ def main() -> None:
     print()
     time = 0.0
     match sys.argv:
-        case [_]:
+        case [_] | [_, '']:
             try:
-                for day_num in range(1, 21):
+                for day_num in range(1, 25):
                     day = get_day(day_num)
                     if day_num == day.day_num:
                         time += run(day, 1)

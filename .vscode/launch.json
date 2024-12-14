@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Python Debugger: All Advent",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "~/projects/python/advent/advent2024_python/advent.py",
+            "console": "integratedTerminal",
+            "args": [
+                "${input:part_to_run}"
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "part_to_run",
+            "type": "promptString",
+            "description": "Part to run"
+        }
+    ]
+}
