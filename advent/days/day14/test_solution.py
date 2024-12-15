@@ -9,6 +9,7 @@ def test_part1():
     assert result == expected
 
 
+
 def test_part2():
     lines = input.read_lines(day_num, "input.txt")
     expected = 6243
