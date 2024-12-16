@@ -32,8 +32,10 @@ class Maze:
                         path.add(end)
                     case ".":
                         path.add(Position(col, row))
-                    case _:
+                    case '#':
                         pass
+                    case _:
+                        raise Exception(f"Unknown tile: {tile}")
 
         assert start is not None and end is not None
         return Maze(path, start, end)
@@ -41,49 +43,47 @@ class Maze:
     @staticmethod
     def check_add(
         known: dict[PosDir, tuple[int, set[Position]]],
-        pos_dir: PosDir,
+        position: Position,
+        direction: Direction,
         value: int,
         path: set[Position],
     ) -> bool:
+        pos_dir = position, direction
         prev = known.get((pos_dir))
         if prev is not None:
             prev_value, prev_path = prev
             if prev_value < value:
                 return False
             elif prev_value == value:
-                known[pos_dir] = value, prev_path | path
+                prev_path.add(position)
+                prev_path |= path
                 return True
 
-        known[pos_dir] = value, path
+        known[pos_dir] = value, path | {position}
         return True
 
     def solve(self) -> tuple[int, set[Position]]:
-        known = {(self.start, Direction.East): (0, {self.start})}
+        visited = {(self.start, Direction.East): (0, {self.start})}
         queue = {(self.start, Direction.East)}
         while queue:
-            min_item = min(queue, key=lambda pd: known[pd][0])
+            min_item = min(queue, key=lambda pd: visited[pd][0])
             queue.remove(min_item)
 
             position, direction = min_item
             if position == self.end:
-                return known[min_item]
+                return visited[min_item]
 
-            value, path = known[min_item]
-            next_pos = position + direction.as_position()
-            if next_pos in self.path and next_pos not in path:
-                new_path = path | {next_pos}
-                if Maze.check_add(known, (next_pos, direction), value + 1, new_path):
-                    queue.add((next_pos, direction))
+            value, path = visited[min_item]
 
-            left = direction.turn_left()
-            if (position + left.as_position()) in self.path:
-                if Maze.check_add(known, (position, left), value + 1000, path):
-                    queue.add((position, left))
-
-            right = direction.turn_right()
-            if (position + right.as_position()) in self.path:
-                if Maze.check_add(known, (position, right), value + 1000, path):
-                    queue.add((position, right))
+            for dir, added in [
+                (direction, 1),
+                (direction.turn_left(), 1_001),
+                (direction.turn_right(), 1_001),
+            ]:
+                next_pos = position + dir.as_position()
+                if next_pos in self.path and next_pos not in path:
+                    if Maze.check_add(visited, next_pos, dir, value + added, path):
+                        queue.add((next_pos, dir))
 
         raise Exception("No Path found")
 
