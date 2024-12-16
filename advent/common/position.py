@@ -11,6 +11,9 @@ class Direction(Enum):
     West = 2
     South = 3
 
+    def __lt__(self, other: Direction) -> bool:
+        return self.value < other.value
+
     def as_position(self) -> Position:
         match self:
             case Direction.East:
