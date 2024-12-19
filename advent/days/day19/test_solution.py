@@ -20,8 +20,8 @@ def test_part2():
 def test_parse():
     lines = input.read_lines(day_num, "example01.txt")
     towels = Towels.parse(lines)
-    assert towels.available.start == ""
-    assert {c.start for c in towels.available.following} == {"r", "wr", "b", "g"}
+    assert towels.pattern.start == ""
+    assert {c.start for c in towels.pattern.children} == {"r", "wr", "b", "g"}
     assert len(towels.desired) == 8
 
 
