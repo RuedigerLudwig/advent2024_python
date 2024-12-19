@@ -73,7 +73,7 @@ class Towels:
         return Towels(tree, desired)
 
     def is_possible(
-        self, towel: str, available: Tree, impossible: set[str], check_virtual: bool
+        self, towel: str, available: Tree, impossible: set[str], check_final: bool
     ) -> bool:
         if towel in impossible:
             return False
@@ -89,7 +89,8 @@ class Towels:
                 ):
                     return True
 
-        impossible.add(towel)
+        if check_final:
+            impossible.add(towel)
         return False
 
     def count_possible(self) -> int:
